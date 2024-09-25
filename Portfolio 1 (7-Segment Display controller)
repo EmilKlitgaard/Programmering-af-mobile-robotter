@@ -1,0 +1,92 @@
+from machine import Pin
+import time
+
+# Define the inverted segments for each digit (0-9)
+digit_to_segments = {
+    0: [0, 0, 0, 0, 0, 0, 1],
+    1: [1, 0, 0, 1, 1, 1, 1],
+    2: [0, 0, 1, 0, 0, 1, 0],
+    3: [0, 0, 0, 0, 1, 1, 0],
+    4: [1, 0, 0, 1, 1, 0, 0],
+    5: [0, 1, 0, 0, 1, 0, 0],
+    6: [0, 1, 0, 0, 0, 0, 0],
+    7: [0, 0, 0, 1, 1, 1, 1],
+    8: [0, 0, 0, 0, 0, 0, 0],
+    9: [0, 0, 0, 0, 1, 0, 0],
+}
+
+# Define the GPIO pins connected to the 7-segment display segments [A, B, C, D, E, F, G]
+# Example: A = GP6, B = GP, C = GP8, D = GP, E = GP10, F = GP11, G = GP12
+pins = [6, 7, 8, 9, 10, 11, 12]
+
+# Initialize the pins
+segments = [Pin(pin, Pin.OUT) for pin in pins]
+
+# Initialize button input (active-low, pull-up resistor connected)
+button = Pin(16, Pin.IN, Pin.PULL_UP)
+
+# Initialize dot output
+dot = Pin(15, Pin.OUT)
+
+def display(digit=0):
+    """Display a digit (0-9) on the 7-segment display.
+
+    Args:
+        digit (int): The digit to display (0-9).
+    """
+    if digit < 0 or digit > len(digit_to_segments) - 1:
+        raise ValueError("Digit must be between 0 and {}".format(len(digit_to_segments) - 1))
+
+    segments_state = digit_to_segments[digit]
+    for segment, state in zip(segments, segments_state):
+        segment.value(state)
+
+    print("{}: {}".format(digit, digit_to_segments[digit]))
+
+def count_up(cnt):
+    return cnt + 1
+
+def count_down(cnt):
+    return cnt - 1
+
+# Set up timers
+last_tick_time = time.time()  # For the 2-second counting loop
+last_dot_time = time.time()   # For the 1-second dot blinking
+
+# Set up variable
+cnt = 0
+up = True
+dot_state = False
+
+while True:
+    # Check button press (assuming button is active-low)
+    if button.value() == 0 and cnt != 0 and cnt != 9:  # Button is pressed
+        print("Button pressed, switching directions")
+        up = not up  # Toggle the direction
+        time.sleep(0.2)  # Debounce delay
+
+    # Update the counting every 2 seconds
+    current_time = time.time()
+    if current_time - last_tick_time >= 2:
+        last_tick_time = current_time  # Reset the tick timer
+
+        # Count up or down based on direction
+        if up:
+            cnt = count_up(cnt)
+            if cnt > 9:
+                cnt = 0
+        else:
+            cnt = count_down(cnt)
+            if cnt < 0:
+                cnt = 9
+
+        display(cnt)  # Display is a function to show the value on a 7-segment display
+
+    # Update the dot every 1 second
+    if current_time - last_dot_time >= 1:
+        last_dot_time = current_time  # Reset the dot timer
+
+        # Toggle the dot state
+        dot.value(0)
+        time.sleep(0.1)
+        dot.value(1)
