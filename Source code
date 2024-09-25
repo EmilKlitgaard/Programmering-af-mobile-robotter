@@ -1,0 +1,54 @@
+from machine import Pin
+import time
+
+# Define the inverted segments for each digit (0-9)
+digit_to_segments = {
+    0: [0, 0, 0, 0, 0, 0, 1],
+    1: [1, 0, 0, 1, 1, 1, 1],
+    2: [0, 0, 1, 0, 0, 1, 0],
+    3: [0, 0, 0, 0, 1, 1, 0],
+    # 4: [?, ?, ?, ?, ?, ?, ?],
+    # 5: [?, ?, ?, ?, ?, ?, ?],
+    # 6: [?, ?, ?, ?, ?, ?, ?],
+    # 7: [?, ?, ?, ?, ?, ?, ?],
+    # 8: [?, ?, ?, ?, ?, ?, ?],
+    # 9: [?, ?, ?, ?, ?, ?, ?]
+}
+
+# Define the GPIO pins connected to the 7-segment display segments [A, B, C, D, E, F, G]
+# Example: A = GP6, B = GP, C = GP8, D = GP, E = GP10, F = GP11, G = GP12
+pins = [6, 7, 8, 9, 10, 11, 12]
+
+# Initialize the pins
+segments = [Pin(pin, Pin.OUT) for pin in pins]
+
+def display(digit=0):
+    """Display a digit (0-9) on the 7-segment display.
+
+    Args:
+        digit (int): The digit to display (0-9).
+    """
+    if digit < 0 or digit > len(digit_to_segments) - 1:
+        raise ValueError("Digit must be between 0 and {}".format(len(digit_to_segments) - 1))
+
+    segments_state = digit_to_segments[digit]
+    for segment, state in zip(segments, segments_state):
+        segment.value(state)
+
+    print("{}: {}".format(digit, digit_to_segments[digit]))
+
+# Example usage:
+display(3)
+time.sleep(10) # Display for 10 seconds
+
+# Counting up
+for cnt in range(len(digit_to_segments)):
+    display(cnt)
+    time.sleep(1)
+
+# Counting down
+for cnt in range(3,-1,-1):
+    display(cnt)
+    time.sleep(1)
+
+# Coffee break !!!
